@@ -151,6 +151,9 @@ activemq-data/
 .env
 .envrc
 .venv
+#
+# Ignore credentials
+Credentials.JSON
 env/
 venv/
 ENV/
