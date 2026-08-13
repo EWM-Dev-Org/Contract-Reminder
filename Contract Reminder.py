@@ -4,7 +4,7 @@ import os
 import json
 import boto3
 from botocore.exceptions import ClientError
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from simple_salesforce import Salesforce
 from azure.storage.blob import BlobServiceClient
 
@@ -28,6 +28,9 @@ SOQL_QUERY = f"""
     FROM Contract
 """
 
+TODAY = date.today()
+DAY = TODAY.day
+REMAINDER = DAY % 2
 
 def get_salesforce_client() -> Salesforce:
     domain = os.environ.get("SF_DOMAIN", "login")  # "login" for prod, "test" for sandbox
@@ -111,14 +114,11 @@ def get_reminder_value(record: dict) -> int | None:
         )
         return None
 
-
 def get_owner_email(record: dict) -> str | None:
-    """Pull the related Owner's email from the query result, if present."""
     owner = record.get("Owner")
     if isinstance(owner, dict):
         return owner.get("Email")
     return None
-
 
 def send_reminders(records: list[dict]) -> int:
     fallback_email = os.environ.get("REMINDER_TO_EMAIL")
@@ -126,7 +126,7 @@ def send_reminders(records: list[dict]) -> int:
     due = []
     for record in records:
         value = get_reminder_value(record)
-        if value is not None and value <= REMINDER_THRESHOLD:
+        if value is not None and value % 2 == REMAINDER:
             due.append((record, value))
 
     if not due:
