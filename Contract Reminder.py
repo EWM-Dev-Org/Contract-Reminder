@@ -2,9 +2,10 @@ import azure.functions as func
 import logging
 import os
 import json
-import boto3
-from botocore.exceptions import ClientError
-from datetime import date, datetime, timezone
+import hmac
+import hashlib
+import requests
+from datetime import datetime, timezone
 from simple_salesforce import Salesforce
 from azure.storage.blob import BlobServiceClient
 
