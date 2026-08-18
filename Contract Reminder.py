@@ -17,7 +17,7 @@ REMINDER_FIELD_NAME = "Contract_Expiration__c"
 
 REMINDER_THRESHOLD = int(os.environ.get("REMINDER_THRESHOLD", "30"))
 
-AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
+AWS_REGION = "us-east-2"
 SES_FROM_EMAIL = "e-sign@empirical.net"
 
 SOQL_QUERY = f"""
@@ -69,17 +69,7 @@ def _get_signature_key(secret_key: str, date_stamp: str, region: str, service: s
     return _sigv4_sign(k_service, "aws4_request")
 
 def _ses_rest_request(method: str, path: str, body_dict: dict | None = None) -> requests.Response:
-    """
-    Make a signed (SigV4) request against the SES v2 REST API.
-    Used for both fetching templates (GET) and sending email (POST).
-    No AWS SDK (boto3) dependency — just `requests` + stdlib hmac/hashlib.
 
-    Requires:
-      - AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY: IAM creds with the relevant
-        ses:* permission (ses:SendEmail, ses:GetEmailTemplate, etc.)
-      - AWS_REGION: the region the identity/template lives in
-      - AWS_SESSION_TOKEN (optional): required only for temporary/STS creds
-    """
     access_key = os.environ["AWS_ACCESS_KEY_ID"]
     secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
     session_token = os.environ.get("AWS_SESSION_TOKEN")  # only set for temporary/STS creds
@@ -244,6 +234,7 @@ def send_reminders(records: list[dict]) -> int:
             template_name = "DfsBlankTemplate"
             
         account = record.get("Account")
+        """Test data"""
         template_data = {
             "contract_number": record.get("ContractNumber"),
             "account_name": account.get("Name") if isinstance(account, dict) else "N/A",
@@ -253,6 +244,7 @@ def send_reminders(records: list[dict]) -> int:
             "reminder_value": value,
             "threshold": REMINDER_THRESHOLD,
         }
+        SES_FROM_EMAIL = record.get("Owner.Email")
         get_ses_email_template(template_name)
         send_templated_email_via_ses(to_email, template_name, template_data)
 
